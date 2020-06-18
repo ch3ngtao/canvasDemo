@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    canvas{
+      display: block;
+      margin:  50px auto;
+      box-shadow: -2px -2px 2px #efefef , 5px 5px 5px #B9B9B9;;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="chess" width="450px" height="450px"></canvas>
+  
+</body>
+<script>
+
+  /**
+   * 五子棋布局
+  */
+  var chess = document.getElementById("chess"); //获取canvas
+  var context = chess.getContext("2d");
+  context.strokeStyle = "#000";//画笔颜色
+  // context.moveTo(15,15);//线的起始位置
+  // context.lineTo(435,15);//线的终点位置
+  // context.stroke();
+
+  function drawLine(){ //封装画表格方法
+    for(var i=0 ;i<15; i++){
+      context.moveTo(15,15+i*30);
+      context.lineTo(435,15+i*30);
+      context.stroke();
+      context.moveTo(15+i*30,15)
+      context.lineTo(15+i*30,435)
+      context.stroke();
+    }
+  }
+
+
+  //设置五子棋背景
+  var img = new Image();
+  img.src = './img/2.jpg'
+  img.onload = function(){
+    context.drawImage(img,0,0,450,450)
+    drawLine();
+    // oneStep(1,1,true);
+    // oneStep(2,2,false);
+    
+  }
+  //棋子画法
+  var oneStep = function(i,j,me){
+    context.beginPath();
+    context.arc(15+i*30, 15+j*30, 13, 0, 2*Math.PI); //5个参数分别是圆心横坐标、圆心纵坐标、半径、开始弧度、结束弧度。
+    context.closePath();
+    var gradient = context.createRadialGradient(15+i*30+2, 15+j*30-2, 15, 15+i*30, 15+j*30, 0);
+    if(me){
+      gradient.addColorStop(0,"#0a0a0a");
+      gradient.addColorStop(1,"#636766");
+    }else{
+      gradient.addColorStop(0, "#D1D1D1");
+      gradient.addColorStop(1, "#F9F9F9");
+    }
+    context.fillStyle = gradient;
+    context.fill();//给圆填充颜色。
+  }
+
+  var me = true
+  //判断当前点下的位置是否有棋子
+  var checkBord = []
+  for (var i=0; i<15; i++) {
+    checkBord[i] = [] ;
+    for (var j=0; j<15; j++) {
+      checkBord[i][j] = 0;
+    }
+  }
+  
+  
+  /**
+   * 赢法逻辑
+  */
+  //赢法数组
+  var wins = [];
+  for(var i=0;i<15;i++){
+    wins[i] = []
+    for(var j=0;j<15;j++){
+      wins[i][j]=[]
+    }
+  }
+  //赢的方法统计
+  var count = 0;
+  //横向
+  for(var i=0;i<15;i++){
+    for(var j=0;j<11;j++){
+      for(var k=0;k<5;k++){
+        //此循环结束，就是横向的第一种赢法
+        wins[i][j+k][count]=true
+      }
+      count ++
+    }
+  }
+  //纵向
+  for(var i=0;i<15;i++){
+    for(var j=0;j<11;j++){
+      for(var k=0;k<5;k++){
+        //此循环结束，就是纵向的第一种赢法
+        wins[j+k][i][count]=true
+      }
+      count ++
+    }
+  }
+  //正斜线
+  for(var i=0;i<11;i++){
+    for(var j=0;j<11;j++){
+      for(var k=0;k<5;k++){
+        //此循环结束，就是正斜向的第一种赢法
+        wins[i+k][j+k][count]=true
+      }
+      count ++
+    }
+  }
+  //反斜线
+  for(var i=0;i<11;i++){
+    for(var j=14;j>3;j--){
+      for(var k=0;k<5;k++){
+        //此循环结束，就是反斜向的第一种赢法
+        wins[i+k][j-k][count]=true
+      }
+      count ++
+    }
+  }
+  // console.log(count);//572种赢法
+
+  //游戏结束
+  var over = false
+  //统计记法数组
+  var blackOne = [];
+  var whiteOne = [];
+  for(var i=0;i<count;i++){
+    blackOne[i]=0;
+    whiteOne[i]=0;
+  }
+
+
+  chess.onclick = function(e){
+    if(over){
+      return
+    }
+    var x = e.offsetX
+    var y = e.offsetY
+    var i = Math.floor(x/30)
+    var j = Math.floor(y/30)
+    if(checkBord[i][j] == 0){
+        oneStep(i,j,me)
+      if(me){
+        checkBord[i][j] = 1 ;
+        for(var k=0;k<count;k++){
+          if(wins[i][j][k]){ //如果某种赢法的棋子为true
+            blackOne[k]++;
+            whiteOne[k]=6;//这中赢法白棋赢不了
+            
+            if(blackOne[k]==5){
+              // console.log('niyingle')
+              window.alert("恭喜,黑棋赢了!")
+              over = true
+            }
+          }
+        }
+      }else{
+        checkBord[i][j] = 2 ;
+        for(var k=0;k<count;k++){
+          console.log();
+          
+          if(wins[i][j][k]){ //如果某种赢法的棋子为true
+            blackOne[k]=6;//这中赢法黑棋赢不了
+            whiteOne[k]++;
+            
+            if(whiteOne[k]==5){
+              // console.log('niyingle')
+              window.alert("恭喜,白棋赢了!")
+              over = true
+            }
+          }
+        }
+      }
+      me = !me;
+      //棋子落下 统计
+    }
+  }
+</script>
+</html>
